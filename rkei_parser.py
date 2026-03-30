@@ -10,9 +10,19 @@ def process_files(file_paths):
         doc = docx.Document(path)
         for table in doc.tables:
             rows = [[cell.text for cell in row.cells] for row in table.rows]
-            if len(rows) >= 1:
-                df = pd.DataFrame(rows[1:], columns=rows[0])
-                frames.append(df)
+            if len(rows) >= 2:
+                headers = rows[0]
+                num_cols = len(headers)
+                normalized = []
+                for row in rows[1:]:
+                    if len(row) < num_cols:
+                        row = row + [''] * (num_cols - len(row))
+                    elif len(row) > num_cols:
+                        row = row[:num_cols]
+                    normalized.append(row)
+                if normalized:
+                    df = pd.DataFrame(normalized, columns=headers)
+                    frames.append(df)
 
     # Combine all DataFrames
     all_data = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
