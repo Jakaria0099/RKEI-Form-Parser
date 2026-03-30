@@ -21,7 +21,17 @@ def process_files(file_paths):
                         row = row[:num_cols]
                     normalized.append(row)
                 if normalized:
-                    df = pd.DataFrame(normalized, columns=headers)
+                    # Deduplicate column names to prevent concat reindex errors
+                    seen = {}
+                    unique_headers = []
+                    for h in headers:
+                        if h in seen:
+                            seen[h] += 1
+                            unique_headers.append(f"{h}_{seen[h]}")
+                        else:
+                            seen[h] = 0
+                            unique_headers.append(h)
+                    df = pd.DataFrame(normalized, columns=unique_headers)
                     frames.append(df)
 
     # Combine all DataFrames
