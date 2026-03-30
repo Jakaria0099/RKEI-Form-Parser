@@ -1,15 +1,21 @@
 def process_files(file_paths):
     import pandas as pd
+    import docx
     from io import BytesIO
 
-    # Create an empty DataFrame to aggregate all Excel data
-    all_data = pd.DataFrame()
+    # Collect DataFrames extracted from all .docx files
+    frames = []
 
     for path in file_paths:
-        # Read the Excel file
-        excel_data = pd.read_excel(path)
-        # Append the data to the all_data DataFrame
-        all_data = all_data.append(excel_data, ignore_index=True)
+        doc = docx.Document(path)
+        for table in doc.tables:
+            rows = [[cell.text for cell in row.cells] for row in table.rows]
+            if len(rows) >= 1:
+                df = pd.DataFrame(rows[1:], columns=rows[0])
+                frames.append(df)
+
+    # Combine all DataFrames
+    all_data = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
     # Convert DataFrame to Excel bytes
     output = BytesIO()
