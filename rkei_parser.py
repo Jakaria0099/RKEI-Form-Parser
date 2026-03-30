@@ -1,24 +1,20 @@
-import pandas as pd
-from io import BytesIO
-from docx import Document
+def process_files(file_paths):
+    import pandas as pd
+    from io import BytesIO
 
+    # Create an empty DataFrame to aggregate all Excel data
+    all_data = pd.DataFrame()
 
-def process_files(docx_path):
-    # Load the DOCX file
-    doc = Document(docx_path)
-    data = []
+    for path in file_paths:
+        # Read the Excel file
+        excel_data = pd.read_excel(path)
+        # Append the data to the all_data DataFrame
+        all_data = all_data.append(excel_data, ignore_index=True)
 
-    # Process the document and extract text
-    for paragraph in doc.paragraphs:
-        if paragraph.text:
-            data.append(paragraph.text)
+    # Convert DataFrame to Excel bytes
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        all_data.to_excel(writer, index=False)
+    output.seek(0)
 
-    # Create a DataFrame from the extracted data
-    df = pd.DataFrame(data, columns=['Text'])
-
-    # Save the DataFrame to an Excel file in memory
-    excel_file = BytesIO()
-    df.to_excel(excel_file, index=False)
-    excel_file.seek(0)  # Move to the beginning of the BytesIO stream
-
-    return excel_file.getvalue()  # Return Excel file bytes
+    return output.read()  # Return the Excel bytes
